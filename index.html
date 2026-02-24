@@ -401,12 +401,12 @@
 
       <section class="calendar">
         <div class="calendar-header">
-          <div class="month-title" id="monthTitle">2026년 3월</div>
+          <div class="month-title" id="monthTitle"></div>
           <div class="month-controls">
             <button class="nav-button" id="prevMonth">이전</button>
             <button class="nav-button" id="nextMonth">다음</button>
           </div>
-          <div class="note" id="monthSubtitle">March 2026 (Weekdays only)</div>
+          <div class="note" id="monthSubtitle"></div>
         </div>
         <div class="calendar-grid" id="calendarGrid"></div>
       </section>
@@ -750,6 +750,7 @@
     async function init() {
       renderUsers();
       setStatusButtons();
+      updateMonthLabels();
       renderCustomHistory();
       const customStatusBtn = document.getElementById("customStatusBtn");
       const customStatusInput = document.getElementById("customStatusInput");
