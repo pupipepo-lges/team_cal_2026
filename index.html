@@ -270,6 +270,7 @@
       align-items: center;
       gap: 6px;
       max-width: 100%;
+      background: linear-gradient(120deg, var(--user-color, #888) 0 35%, var(--status-color, #666) 35% 100%);
     }
 
     .entry-delete {
@@ -292,11 +293,11 @@
     }
 
     .entry.remote {
-      background: var(--chip-remote);
+      --status-color: var(--chip-remote);
     }
 
     .entry.leave {
-      background: var(--chip-leave);
+      --status-color: var(--chip-leave);
     }
 
     .entry small {
@@ -328,7 +329,7 @@
   <div class="page">
     <header>
       <div class="title-block">
-        <h1>Team Shift Calendar</h1>
+        <h1>미래기술파트 근무표</h1>
         <div class="subtitle">4명의 팀원이 원격근무 / 휴가를 선택해서 날짜에 등록할 수 있는 프로토타입</div>
       </div>
       <div class="legend">
@@ -589,6 +590,7 @@
               const user = users.find(u => u.id === entry.userId);
               const item = document.createElement("div");
               item.className = `entry ${entry.status}`;
+              item.style.setProperty("--user-color", user.color);
               item.innerHTML = `<strong>${user.name}</strong><small>${entry.status === "remote" ? "원격" : "휴가"}</small>`;
               const del = document.createElement("button");
               del.className = "entry-delete";
