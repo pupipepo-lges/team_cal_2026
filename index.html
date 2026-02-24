@@ -304,24 +304,6 @@
       background: linear-gradient(120deg, var(--user-color, #888) 0 35%, var(--status-color, #666) 35% 100%);
     }
 
-    .entry-delete {
-      border: none;
-      background: rgba(255, 255, 255, 0.2);
-      color: #fff;
-      width: 18px;
-      height: 18px;
-      border-radius: 999px;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 12px;
-      line-height: 1;
-    }
-
-    .entry-delete:hover {
-      background: rgba(255, 255, 255, 0.35);
-    }
 
     .entry.remote {
       --status-color: var(--chip-remote);
@@ -707,16 +689,6 @@
               item.className = `entry ${statusInfo.type}`;
               item.style.setProperty("--user-color", user.color);
               item.innerHTML = `<strong>${user.name}</strong><small>${statusInfo.label}</small>`;
-              const del = document.createElement("button");
-              del.className = "entry-delete";
-              del.type = "button";
-              del.setAttribute("aria-label", "Delete entry");
-              del.textContent = "x";
-              del.addEventListener("click", event => {
-                event.stopPropagation();
-                deleteEntry(dateKey, entry.userId, entry.status);
-              });
-              item.appendChild(del);
               entries.appendChild(item);
             });
 
