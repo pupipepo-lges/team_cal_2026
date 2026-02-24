@@ -368,6 +368,9 @@
   </div>
 
   <script>
+    const SUPABASE_URL = "https://rjrqdtxvjxfvttvhwzet.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJqcnFkdHh2anhmdnR0dmh3emV0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE5MDMyMTEsImV4cCI6MjA4NzQ3OTIxMX0.j82Cj59VrGf3_vwDt3cbzJLtbTJwJ1WuMlFAhUKLIlo";
+    const SUPABASE_TABLE = "entries";
     const users = [
       { id: "u1", name: "차선영", color: "#f08b4f" },
       { id: "u2", name: "민지원", color: "#1f7a70" },
@@ -380,6 +383,45 @@
       activeStatus: "remote",
       entries: {}
     };
+
+    function buildSupabaseUrl(path) {
+      return `${SUPABASE_URL}${path}`;
+    }
+
+    async function supabaseRequest(path, options = {}) {
+      const response = await fetch(buildSupabaseUrl(path), {
+        ...options,
+        headers: {
+          "Content-Type": "application/json",
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+          ...options.headers
+        }
+      });
+      if (!response.ok) {
+        const message = await response.text();
+        throw new Error(message || "Supabase request failed");
+      }
+      if (response.status === 204) {
+        return null;
+      }
+      return response.json();
+    }
+
+    async function fetchEntries() {
+      const data = await supabaseRequest(
+        `/rest/v1/${SUPABASE_TABLE}?select=date,user_id,status`
+      );
+      state.entries = {};
+      data.forEach(entry => {
+        const key = getEntryKey(entry.date, entry.user_id, entry.status);
+        state.entries[key] = {
+          date: entry.date,
+          userId: entry.user_id,
+          status: entry.status
+        };
+      });
+    }
 
     function renderUsers() {
       const userList = document.getElementById("userList");
@@ -410,25 +452,52 @@
       return `${dateString}|${userId}|${status}`;
     }
 
-    function toggleEntry(dateString) {
-      const key = getEntryKey(dateString, state.activeUserId, state.activeStatus);
-      if (state.entries[key]) {
-        delete state.entries[key];
-      } else {
-        state.entries[key] = {
-          date: dateString,
-          userId: state.activeUserId,
-          status: state.activeStatus
-        };
+    async function toggleEntry(dateString) {
+      const entry = {
+        date: dateString,
+        userId: state.activeUserId,
+        status: state.activeStatus
+      };
+      const key = getEntryKey(entry.date, entry.userId, entry.status);
+      try {
+        if (state.entries[key]) {
+          await supabaseRequest(
+            `/rest/v1/${SUPABASE_TABLE}?date=eq.${entry.date}&user_id=eq.${entry.userId}&status=eq.${entry.status}`,
+            { method: "DELETE" }
+          );
+          delete state.entries[key];
+        } else {
+          await supabaseRequest(`/rest/v1/${SUPABASE_TABLE}`, {
+            method: "POST",
+            headers: { Prefer: "return=representation" },
+            body: JSON.stringify({
+              date: entry.date,
+              user_id: entry.userId,
+              status: entry.status
+            })
+          });
+          state.entries[key] = entry;
+        }
+      } catch (error) {
+        alert("저장에 실패했습니다. 다시 시도해 주세요.");
       }
       renderCalendar();
     }
 
-    function deleteEntry(dateString, userId, status) {
+    async function deleteEntry(dateString, userId, status) {
       const key = getEntryKey(dateString, userId, status);
-      if (state.entries[key]) {
+      if (!state.entries[key]) {
+        return;
+      }
+      try {
+        await supabaseRequest(
+          `/rest/v1/${SUPABASE_TABLE}?date=eq.${dateString}&user_id=eq.${userId}&status=eq.${status}`,
+          { method: "DELETE" }
+        );
         delete state.entries[key];
         renderCalendar();
+      } catch (error) {
+        alert("삭제에 실패했습니다. 다시 시도해 주세요.");
       }
     }
 
@@ -561,9 +630,18 @@
       renderCalendar();
     });
 
-    renderUsers();
-    setStatusButtons();
-    renderCalendar();
+    async function init() {
+      renderUsers();
+      setStatusButtons();
+      try {
+        await fetchEntries();
+      } catch (error) {
+        alert("일정 불러오기에 실패했습니다. 잠시 후 다시 시도해 주세요.");
+      }
+      renderCalendar();
+    }
+
+    init();
   </script>
 </body>
 </html>
