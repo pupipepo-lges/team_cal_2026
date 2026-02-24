@@ -657,8 +657,9 @@
     const monthTitle = document.getElementById("monthTitle");
     const monthSubtitle = document.getElementById("monthSubtitle");
 
-    let currentYear = 2026;
-    let currentMonth = 2;
+    const today = new Date();
+    let currentYear = today.getFullYear();
+    let currentMonth = today.getMonth();
 
     function updateMonthLabels() {
       const monthNames = [
