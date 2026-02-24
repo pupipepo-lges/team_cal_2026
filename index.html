@@ -1,0 +1,569 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Team Shift Calendar - 2026 March</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #f7f1e6;
+      --bg-accent: #f2d8c7;
+      --ink: #1b1b1f;
+      --muted: #5a5a66;
+      --brand: #0f6b66;
+      --brand-2: #f08b4f;
+      --card: #ffffff;
+      --chip-remote: #2b6f9e;
+      --chip-leave: #c44d3a;
+      --shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+      --radius: 18px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: radial-gradient(1000px 500px at 10% 5%, #ffe8d7 0%, transparent 60%),
+        radial-gradient(900px 400px at 85% 15%, #dff0ef 0%, transparent 55%),
+        var(--bg);
+      font-family: "Space Grotesk", "Noto Sans KR", system-ui, sans-serif;
+    }
+
+    .page {
+      min-height: 100vh;
+      padding: 28px;
+      display: grid;
+      gap: 24px;
+    }
+
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+    }
+
+    .title-block {
+      display: grid;
+      gap: 8px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(26px, 3vw, 38px);
+      letter-spacing: -0.02em;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .legend {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: var(--card);
+      box-shadow: var(--shadow);
+      font-size: 13px;
+    }
+
+    .chip span {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+    }
+
+    .chip.remote span {
+      background: var(--chip-remote);
+    }
+
+    .chip.leave span {
+      background: var(--chip-leave);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(220px, 280px) 1fr;
+      gap: 20px;
+    }
+
+    .panel,
+    .calendar {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .panel {
+      padding: 18px;
+      display: grid;
+      gap: 18px;
+      align-content: start;
+    }
+
+    .panel h2 {
+      margin: 0;
+      font-size: 18px;
+    }
+
+    .user-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .user-button {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid #e6e0d9;
+      background: #fff;
+      cursor: pointer;
+      transition: transform 0.2s ease, border 0.2s ease;
+    }
+
+    .user-button.active {
+      border-color: var(--brand);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 18px rgba(15, 107, 102, 0.2);
+    }
+
+    .user-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: var(--brand-2);
+    }
+
+    .status-toggle {
+      display: grid;
+      gap: 10px;
+    }
+
+    .status-button {
+      border: 1px solid #e6e0d9;
+      background: #fffaf5;
+      border-radius: 10px;
+      padding: 10px 12px;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.2s ease;
+    }
+
+    .status-button.active {
+      background: #f0fffd;
+      border-color: var(--brand);
+      color: var(--brand);
+      font-weight: 600;
+    }
+
+    .calendar {
+      padding: 18px;
+      display: grid;
+      gap: 16px;
+    }
+
+    .calendar-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .month-controls {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .nav-button {
+      border: 1px solid #e6e0d9;
+      background: #fffaf5;
+      border-radius: 999px;
+      padding: 6px 14px;
+      cursor: pointer;
+      font-size: 13px;
+      transition: all 0.2s ease;
+    }
+
+    .nav-button:hover {
+      border-color: var(--brand);
+      color: var(--brand);
+    }
+
+    .month-title {
+      font-size: 22px;
+      font-weight: 700;
+    }
+
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(110px, 1fr));
+      gap: 12px;
+    }
+
+    .day-name {
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-size: 11px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .day {
+      background: #fff;
+      border: 1px solid #efe7df;
+      border-radius: 14px;
+      padding: 10px;
+      min-height: 110px;
+      display: grid;
+      gap: 8px;
+      cursor: pointer;
+      transition: transform 0.2s ease, border 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .day:hover {
+      transform: translateY(-2px);
+      border-color: var(--brand-2);
+      box-shadow: 0 8px 18px rgba(240, 139, 79, 0.2);
+    }
+
+    .day.outside {
+      opacity: 0.3;
+      cursor: default;
+    }
+
+    .date-number {
+      font-weight: 700;
+    }
+
+    .entries {
+      display: grid;
+      gap: 6px;
+    }
+
+    .entry {
+      font-size: 12px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      color: #fff;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      max-width: 100%;
+    }
+
+    .entry-delete {
+      border: none;
+      background: rgba(255, 255, 255, 0.2);
+      color: #fff;
+      width: 18px;
+      height: 18px;
+      border-radius: 999px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      line-height: 1;
+    }
+
+    .entry-delete:hover {
+      background: rgba(255, 255, 255, 0.35);
+    }
+
+    .entry.remote {
+      background: var(--chip-remote);
+    }
+
+    .entry.leave {
+      background: var(--chip-leave);
+    }
+
+    .entry small {
+      opacity: 0.8;
+    }
+
+    .note {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+
+    @media (max-width: 980px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .calendar-grid {
+        grid-template-columns: repeat(5, minmax(70px, 1fr));
+      }
+
+      .day {
+        min-height: 90px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header>
+      <div class="title-block">
+        <h1>Team Shift Calendar</h1>
+        <div class="subtitle">4명의 팀원이 원격근무 / 휴가를 선택해서 날짜에 등록할 수 있는 프로토타입</div>
+      </div>
+      <div class="legend">
+        <div class="chip remote"><span></span>Remote</div>
+        <div class="chip leave"><span></span>Leave</div>
+      </div>
+    </header>
+
+    <section class="layout">
+      <aside class="panel">
+        <h2>사용자 선택</h2>
+        <div class="user-list" id="userList"></div>
+
+        <h2>상태 선택</h2>
+        <div class="status-toggle">
+          <button class="status-button active" data-status="remote">원격근무</button>
+          <button class="status-button" data-status="leave">휴가</button>
+        </div>
+
+        <div class="note">
+          날짜를 클릭하면 선택된 사용자의 상태가 등록됩니다. 다시 클릭하면 제거됩니다.
+        </div>
+      </aside>
+
+      <section class="calendar">
+        <div class="calendar-header">
+          <div class="month-title" id="monthTitle">2026년 3월</div>
+          <div class="month-controls">
+            <button class="nav-button" id="prevMonth">이전</button>
+            <button class="nav-button" id="nextMonth">다음</button>
+          </div>
+          <div class="note" id="monthSubtitle">March 2026 (Weekdays only)</div>
+        </div>
+        <div class="calendar-grid" id="calendarGrid"></div>
+      </section>
+    </section>
+  </div>
+
+  <script>
+    const users = [
+      { id: "u1", name: "차선영", color: "#f08b4f" },
+      { id: "u2", name: "민지원", color: "#1f7a70" },
+      { id: "u3", name: "신원경", color: "#2b6f9e" },
+      { id: "u4", name: "양승윤", color: "#9a4d3a" }
+    ];
+
+    const state = {
+      activeUserId: users[0].id,
+      activeStatus: "remote",
+      entries: {}
+    };
+
+    function renderUsers() {
+      const userList = document.getElementById("userList");
+      userList.innerHTML = "";
+      users.forEach(user => {
+        const button = document.createElement("button");
+        button.className = "user-button" + (user.id === state.activeUserId ? " active" : "");
+        button.innerHTML = `<span>${user.name}</span><span class="user-dot" style="background:${user.color}"></span>`;
+        button.addEventListener("click", () => {
+          state.activeUserId = user.id;
+          renderUsers();
+        });
+        userList.appendChild(button);
+      });
+    }
+
+    function setStatusButtons() {
+      document.querySelectorAll(".status-button").forEach(button => {
+        button.classList.toggle("active", button.dataset.status === state.activeStatus);
+        button.addEventListener("click", () => {
+          state.activeStatus = button.dataset.status;
+          setStatusButtons();
+        });
+      });
+    }
+
+    function getEntryKey(dateString, userId, status) {
+      return `${dateString}|${userId}|${status}`;
+    }
+
+    function toggleEntry(dateString) {
+      const key = getEntryKey(dateString, state.activeUserId, state.activeStatus);
+      if (state.entries[key]) {
+        delete state.entries[key];
+      } else {
+        state.entries[key] = {
+          date: dateString,
+          userId: state.activeUserId,
+          status: state.activeStatus
+        };
+      }
+      renderCalendar();
+    }
+
+    function deleteEntry(dateString, userId, status) {
+      const key = getEntryKey(dateString, userId, status);
+      if (state.entries[key]) {
+        delete state.entries[key];
+        renderCalendar();
+      }
+    }
+
+    function buildWeekdayCells(year, monthIndex) {
+      const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
+      const cells = [];
+
+      let firstWeekdayIndex = null;
+      for (let day = 1; day <= daysInMonth; day++) {
+        const date = new Date(year, monthIndex, day);
+        const weekdayIndexMon = (date.getDay() + 6) % 7;
+        if (weekdayIndexMon <= 4) {
+          firstWeekdayIndex = weekdayIndexMon;
+          break;
+        }
+      }
+
+      if (firstWeekdayIndex !== null) {
+        for (let i = 0; i < firstWeekdayIndex; i++) {
+          cells.push({ date: null, outside: true });
+        }
+      }
+
+      for (let day = 1; day <= daysInMonth; day++) {
+        const date = new Date(year, monthIndex, day);
+        const weekdayIndexMon = (date.getDay() + 6) % 7;
+        if (weekdayIndexMon <= 4) {
+          cells.push({ date, outside: false });
+        }
+      }
+
+      while (cells.length % 5 !== 0) {
+        cells.push({ date: null, outside: true });
+      }
+
+      return cells;
+    }
+
+    function formatDateKey(date) {
+      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+    }
+
+    const monthTitle = document.getElementById("monthTitle");
+    const monthSubtitle = document.getElementById("monthSubtitle");
+
+    let currentYear = 2026;
+    let currentMonth = 2;
+
+    function updateMonthLabels() {
+      const monthNames = [
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+      ];
+      monthTitle.textContent = `${currentYear}년 ${currentMonth + 1}월`;
+      monthSubtitle.textContent = `${monthNames[currentMonth]} ${currentYear} (Weekdays only)`;
+    }
+
+    function renderCalendar() {
+      const calendarGrid = document.getElementById("calendarGrid");
+      calendarGrid.innerHTML = "";
+
+      updateMonthLabels();
+
+      const dayNames = ["Mon", "Tue", "Wed", "Thu", "Fri"];
+      dayNames.forEach(dayName => {
+        const label = document.createElement("div");
+        label.className = "day-name";
+        label.textContent = dayName;
+        calendarGrid.appendChild(label);
+      });
+
+      const dates = buildWeekdayCells(currentYear, currentMonth);
+      dates.forEach(cell => {
+        const day = document.createElement("div");
+        day.className = "day" + (cell.outside ? " outside" : "");
+
+        if (cell.date) {
+          const dateKey = formatDateKey(cell.date);
+          const dateNumber = document.createElement("div");
+          dateNumber.className = "date-number";
+          dateNumber.textContent = cell.date.getDate();
+
+          const entries = document.createElement("div");
+          entries.className = "entries";
+
+          Object.values(state.entries)
+            .filter(entry => entry.date === dateKey)
+            .forEach(entry => {
+              const user = users.find(u => u.id === entry.userId);
+              const item = document.createElement("div");
+              item.className = `entry ${entry.status}`;
+              item.innerHTML = `<strong>${user.name}</strong><small>${entry.status === "remote" ? "원격" : "휴가"}</small>`;
+              const del = document.createElement("button");
+              del.className = "entry-delete";
+              del.type = "button";
+              del.setAttribute("aria-label", "Delete entry");
+              del.textContent = "x";
+              del.addEventListener("click", event => {
+                event.stopPropagation();
+                deleteEntry(dateKey, entry.userId, entry.status);
+              });
+              item.appendChild(del);
+              entries.appendChild(item);
+            });
+
+          day.appendChild(dateNumber);
+          day.appendChild(entries);
+          day.addEventListener("click", () => toggleEntry(dateKey));
+        }
+
+        calendarGrid.appendChild(day);
+      });
+    }
+
+    document.getElementById("prevMonth").addEventListener("click", () => {
+      currentMonth -= 1;
+      if (currentMonth < 0) {
+        currentMonth = 11;
+        currentYear -= 1;
+      }
+      renderCalendar();
+    });
+
+    document.getElementById("nextMonth").addEventListener("click", () => {
+      currentMonth += 1;
+      if (currentMonth > 11) {
+        currentMonth = 0;
+        currentYear += 1;
+      }
+      renderCalendar();
+    });
+
+    renderUsers();
+    setStatusButtons();
+    renderCalendar();
+  </script>
+</body>
+</html>
