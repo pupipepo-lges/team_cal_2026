@@ -175,6 +175,37 @@
       font-weight: 600;
     }
 
+    .status-custom {
+      display: grid;
+      gap: 8px;
+    }
+
+    .status-custom-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .status-custom input {
+      flex: 1 1 140px;
+      border: 1px solid #e6e0d9;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 13px;
+      font-family: inherit;
+      background: #fff;
+    }
+
+    .status-custom select {
+      flex: 1 1 140px;
+      border: 1px solid #e6e0d9;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 13px;
+      font-family: inherit;
+      background: #fff;
+    }
+
     .calendar {
       padding: 18px;
       display: grid;
@@ -300,6 +331,10 @@
       --status-color: var(--chip-leave);
     }
 
+    .entry.custom {
+      --status-color: var(--user-color, #888);
+    }
+
     .entry small {
       opacity: 0.8;
     }
@@ -347,6 +382,16 @@
         <div class="status-toggle">
           <button class="status-button active" data-status="remote">원격근무</button>
           <button class="status-button" data-status="leave">휴가</button>
+          <div class="status-custom">
+            <label for="customStatusInput" class="note">직접 입력</label>
+            <div class="status-custom-row">
+              <input id="customStatusInput" type="text" placeholder="예: 외근, 출장" />
+              <button class="status-button" id="customStatusBtn" type="button">등록</button>
+              <select id="customStatusHistory" aria-label="최근 입력">
+                <option value="">최근 입력</option>
+              </select>
+            </div>
+          </div>
         </div>
 
         <div class="note">
@@ -411,7 +456,7 @@
 
     async function fetchEntries() {
       const data = await supabaseRequest(
-        `/rest/v1/${SUPABASE_TABLE}?select=date,user_id,status`
+        `/rest/v1/${SUPABASE_TABLE}?select=date,user_id,status,created_at&order=created_at.desc`
       );
       state.entries = {};
       data.forEach(entry => {
@@ -419,7 +464,8 @@
         state.entries[key] = {
           date: entry.date,
           userId: entry.user_id,
-          status: entry.status
+          status: entry.status,
+          createdAt: entry.created_at
         };
       });
     }
@@ -440,12 +486,76 @@
     }
 
     function setStatusButtons() {
-      document.querySelectorAll(".status-button").forEach(button => {
+      document.querySelectorAll(".status-button[data-status]").forEach(button => {
         button.classList.toggle("active", button.dataset.status === state.activeStatus);
         button.addEventListener("click", () => {
           state.activeStatus = button.dataset.status;
           setStatusButtons();
         });
+      });
+      const customButton = document.getElementById("customStatusBtn");
+      if (customButton) {
+        customButton.classList.toggle("active", state.activeStatus.startsWith("custom:"));
+      }
+    }
+
+    function parseStatus(statusValue) {
+      if (statusValue.startsWith("custom:")) {
+        return { type: "custom", label: statusValue.slice(7) || "기타" };
+      }
+      return {
+        type: statusValue,
+        label: statusValue === "remote" ? "원격" : "휴가"
+      };
+    }
+
+    function setCustomStatusActive() {
+      const input = document.getElementById("customStatusInput");
+      if (!input) {
+        return;
+      }
+      const value = input.value.trim();
+      if (!value) {
+        alert("입력값을 작성해 주세요.");
+        return;
+      }
+      state.activeStatus = `custom:${value}`;
+      setStatusButtons();
+    }
+
+    function getCustomHistory() {
+      const entries = Object.values(state.entries)
+        .filter(entry => entry.status.startsWith("custom:"))
+        .sort((a, b) => {
+          const left = a.createdAt || "";
+          const right = b.createdAt || "";
+          return right.localeCompare(left);
+        });
+      const seen = new Set();
+      const list = [];
+      entries.forEach(entry => {
+        const label = entry.status.slice(7).trim();
+        if (!label || seen.has(label)) {
+          return;
+        }
+        seen.add(label);
+        list.push(label);
+      });
+      return list.slice(0, 8);
+    }
+
+    function renderCustomHistory() {
+      const select = document.getElementById("customStatusHistory");
+      if (!select) {
+        return;
+      }
+      const history = getCustomHistory();
+      select.innerHTML = "<option value=\"\">최근 입력</option>";
+      history.forEach(item => {
+        const option = document.createElement("option");
+        option.value = item;
+        option.textContent = item;
+        select.appendChild(option);
       });
     }
 
@@ -463,12 +573,12 @@
       try {
         if (state.entries[key]) {
           await supabaseRequest(
-            `/rest/v1/${SUPABASE_TABLE}?date=eq.${entry.date}&user_id=eq.${entry.userId}&status=eq.${entry.status}`,
+            `/rest/v1/${SUPABASE_TABLE}?date=eq.${entry.date}&user_id=eq.${entry.userId}&status=eq.${encodeURIComponent(entry.status)}`,
             { method: "DELETE" }
           );
           delete state.entries[key];
         } else {
-          await supabaseRequest(`/rest/v1/${SUPABASE_TABLE}`, {
+          const createdRows = await supabaseRequest(`/rest/v1/${SUPABASE_TABLE}`, {
             method: "POST",
             headers: { Prefer: "return=representation" },
             body: JSON.stringify({
@@ -477,12 +587,14 @@
               status: entry.status
             })
           });
-          state.entries[key] = entry;
+          const createdAt = Array.isArray(createdRows) && createdRows[0] ? createdRows[0].created_at : null;
+          state.entries[key] = { ...entry, createdAt };
         }
       } catch (error) {
         alert("저장에 실패했습니다. 다시 시도해 주세요.");
       }
       renderCalendar();
+      renderCustomHistory();
     }
 
     async function deleteEntry(dateString, userId, status) {
@@ -492,11 +604,12 @@
       }
       try {
         await supabaseRequest(
-          `/rest/v1/${SUPABASE_TABLE}?date=eq.${dateString}&user_id=eq.${userId}&status=eq.${status}`,
+          `/rest/v1/${SUPABASE_TABLE}?date=eq.${dateString}&user_id=eq.${userId}&status=eq.${encodeURIComponent(status)}`,
           { method: "DELETE" }
         );
         delete state.entries[key];
         renderCalendar();
+        renderCustomHistory();
       } catch (error) {
         alert("삭제에 실패했습니다. 다시 시도해 주세요.");
       }
@@ -588,10 +701,11 @@
             .filter(entry => entry.date === dateKey)
             .forEach(entry => {
               const user = users.find(u => u.id === entry.userId);
+              const statusInfo = parseStatus(entry.status);
               const item = document.createElement("div");
-              item.className = `entry ${entry.status}`;
+              item.className = `entry ${statusInfo.type}`;
               item.style.setProperty("--user-color", user.color);
-              item.innerHTML = `<strong>${user.name}</strong><small>${entry.status === "remote" ? "원격" : "휴가"}</small>`;
+              item.innerHTML = `<strong>${user.name}</strong><small>${statusInfo.label}</small>`;
               const del = document.createElement("button");
               del.className = "entry-delete";
               del.type = "button";
@@ -635,11 +749,40 @@
     async function init() {
       renderUsers();
       setStatusButtons();
+      renderCustomHistory();
+      const customStatusBtn = document.getElementById("customStatusBtn");
+      const customStatusInput = document.getElementById("customStatusInput");
+      const customStatusHistory = document.getElementById("customStatusHistory");
+      if (customStatusBtn) {
+        customStatusBtn.addEventListener("click", setCustomStatusActive);
+      }
+      if (customStatusInput) {
+        customStatusInput.addEventListener("keydown", event => {
+          if (event.key === "Enter") {
+            event.preventDefault();
+            setCustomStatusActive();
+          }
+        });
+      }
+      if (customStatusHistory) {
+        customStatusHistory.addEventListener("change", event => {
+          const selected = event.target.value.trim();
+          if (!selected) {
+            return;
+          }
+          if (customStatusInput) {
+            customStatusInput.value = selected;
+          }
+          state.activeStatus = `custom:${selected}`;
+          setStatusButtons();
+        });
+      }
       try {
         await fetchEntries();
       } catch (error) {
         alert("일정 불러오기에 실패했습니다. 잠시 후 다시 시도해 주세요.");
       }
+      renderCustomHistory();
       renderCalendar();
     }
 
